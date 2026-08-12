@@ -68,10 +68,10 @@ SSH into the VM and run the one-command installer with `sudo`. It downloads a si
 
 ```bash
 # on the VM (Docker, k3d, kubectl, helm already installed)
-curl -fsSL https://github.com/wso2/agent-manager/releases/download/amp/v0.0.0-dev/bootstrap.sh \
+curl -fsSL https://github.com/wso2/agent-manager/releases/download/amp/v1.0.0-beta/bootstrap.sh \
   | sudo bash -s -- simple \
       --host <VM_PUBLIC_IP> \
-      --version 0.0.0-dev \
+      --version 1.0.0-beta \
       --email you@example.com
 ```
 
