@@ -1,12 +1,19 @@
 {
   "docsSidebar": [
     {
+      "type": "doc",
+      "id": "index",
+      "label": "Home",
+      "className": "sidebar-doc-home"
+    },
+    {
       "type": "category",
       "label": "Get Started",
       "collapsed": false,
       "items": [
         "get-started/what-is-amp"
-      ]
+      ],
+      "className": "sidebar-section-icon-get-started"
     },
     {
       "type": "category",
@@ -26,7 +33,8 @@
         "concepts/deployment-pipeline",
         "concepts/llm-service-provider",
         "concepts/mcp-proxy"
-      ]
+      ],
+      "className": "sidebar-section-icon-concepts"
     },
     {
       "type": "category",
@@ -85,7 +93,8 @@
             "guides/retrieve-agentid-for-externally-hosted-agents"
           ]
         }
-      ]
+      ],
+      "className": "sidebar-section-icon-guides"
     },
     {
       "type": "category",
@@ -98,7 +107,8 @@
           "id": "tutorials/observe-first-agent",
           "label": "Monitoring an Agent"
         }
-      ]
+      ],
+      "className": "sidebar-section-icon-tutorials"
     }
   ]
 }

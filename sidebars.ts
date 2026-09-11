@@ -14,9 +14,19 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
  */
 const sidebars: SidebarsConfig = {
   docsSidebar: [
+    // The docs landing page. A doc only gets a sidebar if it belongs to one,
+    // so this entry is what makes /docs/<version>/ render with the sidebar
+    // rather than as a bare page.
+    {
+      type: 'doc',
+      id: 'index',
+      label: 'Home',
+      className: 'sidebar-doc-home',
+    },
     {
       type: 'category',
       label: 'Get Started',
+      className: 'sidebar-section-icon-get-started',
       collapsed: false,
       items: [
         'get-started/what-is-amp',
@@ -26,6 +36,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
+      className: 'sidebar-section-icon-concepts',
       collapsed: false,
       items: [                     
         'concepts/organization',                  
@@ -47,6 +58,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Guides',
+      className: 'sidebar-section-icon-guides',
       collapsed: false,
       items: [
         {
@@ -127,6 +139,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Tutorials',
+      className: 'sidebar-section-icon-tutorials',
       collapsed: false,
       items: [
         'tutorials/create-your-first-agent',
@@ -140,6 +153,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'References',
+      className: 'sidebar-section-icon-references',
       collapsed: false,
       items: [
         {
@@ -185,6 +199,7 @@ const sidebars: SidebarsConfig = {
       type: 'doc',
       id: 'contributing',
       label: 'Contributing',
+      className: 'sidebar-section-icon-contributing',
     },
   ],
 };
