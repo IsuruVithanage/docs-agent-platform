@@ -49,7 +49,16 @@ clean:
 # by its release pipeline. There is nothing to generate here, so `version` and
 # `update-version` no longer depend on a helm-reference target.
 
-# Create a new documentation version
+# Create a new documentation version.
+#
+# The Helm chart reference is regenerated AFTER the snapshot is taken, writing
+# directly into versioned_docs/version-$(VERSION)/. The charts live in the public
+# wso2/agent-manager repo and are fetched at the amp/$(DOCKER_TAG) tag, so the
+# snapshot documents the charts as they stood for that release.
+#
+# It deliberately does not regenerate the Next docs: those track agent-manager's
+# main branch, and rewriting them from a release tag would silently roll back
+# every chart change merged since that release.
 version:
 ifndef VERSION
 	@echo "Error: VERSION and DOCKER_TAG are required"
@@ -67,6 +76,10 @@ endif
 		exit 1; \
 	else \
 		npm run docusaurus docs:version $(VERSION); \
+		echo "Regenerating the Helm chart reference from the $(DOCKER_TAG) charts..."; \
+		node scripts/gen-helm-reference.mjs \
+			--tag amp/$(DOCKER_TAG) \
+			--out versioned_docs/version-$(VERSION)/reference/helm-charts; \
 		echo "Replacing version placeholders in versioned docs..."; \
 		DOCKER_TAG_NO_V=$$(echo $(DOCKER_TAG) | sed 's/^v//'); \
 		find ./versioned_docs/version-$(VERSION) -type f \( -name "*.md" -o -name "*.mdx" \) ! -name "_constants.md" -exec \

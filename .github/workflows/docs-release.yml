@@ -1,0 +1,167 @@
+name: Documentation Release
+
+# Run manually when an agent-manager release should be documented. This is the
+# same flow that used to live in wso2/agent-manager as docs-release.yml; only the
+# repository it runs in has changed.
+#
+# It cuts a versioned snapshot, regenerates that snapshot's Helm chart reference
+# from the charts at the release tag, and opens a PR. Merging the PR triggers
+# deploy.yml, which publishes the site.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Documentation version (for Docusaurus versioning - e.g., v1.1.0)"
+        required: true
+        type: string
+      docker_tag:
+        description: "Release version tag (for Docker images and Helm charts - e.g., v1.1.0)"
+        required: true
+        type: string
+
+run-name: Documentation Release ${{ inputs.version }}
+
+jobs:
+  release-docs:
+    name: Release Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      VERSION: ${{ inputs.version }}
+      DOCKER_TAG: ${{ inputs.docker_tag }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.'; then
+            echo "::error::VERSION '$VERSION' must look like v1.1.0 or v1.1.x"
+            exit 1
+          fi
+          if ! printf '%s' "$DOCKER_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::DOCKER_TAG '$DOCKER_TAG' must look like v1.1.0"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Confirm the release tag exists in agent-manager
+        run: |
+          set -euo pipefail
+          # The Helm reference is fetched from this tag. Failing here gives a
+          # clear cause; without it the generator fails later with a bare 404.
+          URL="https://api.github.com/repos/wso2/agent-manager/git/ref/tags/amp/$DOCKER_TAG"
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Tag amp/$DOCKER_TAG not found in wso2/agent-manager (HTTP $CODE)"
+            exit 1
+          fi
+          echo "✅ Found tag amp/$DOCKER_TAG"
+
+      - name: Check the version does not already exist
+        run: |
+          set -euo pipefail
+          if grep -q "\"$VERSION\"" versions.json; then
+            echo "::error::Version $VERSION already exists in versions.json"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create documentation version
+        run: make version VERSION="$VERSION" DOCKER_TAG="$DOCKER_TAG"
+
+      - name: Verify version replacement
+        run: |
+          set -o pipefail
+
+          PLACEHOLDER_COUNT=$(grep -r -E "v?0\.0\.0-dev" "versioned_docs/version-$VERSION/" 2>/dev/null | wc -l | tr -d ' ') || true
+          PLACEHOLDER_COUNT="${PLACEHOLDER_COUNT:-0}"
+
+          if [ "$PLACEHOLDER_COUNT" -gt 0 ]; then
+            echo "❌ Found $PLACEHOLDER_COUNT remaining placeholder references:"
+            grep -r -n -E "v?0\.0\.0-dev" "versioned_docs/version-$VERSION/" || true
+            exit 1
+          fi
+          echo "✅ No placeholders found in versioned docs"
+
+          if ! grep -q "latestVersion:.*'$VERSION'" docs/_constants.md; then
+            echo "❌ docs/_constants.md does not contain latestVersion: '$VERSION'"
+            cat docs/_constants.md
+            exit 1
+          fi
+          if ! grep -q "quickStartDockerTag:.*'$DOCKER_TAG'" docs/_constants.md; then
+            echo "❌ docs/_constants.md does not contain quickStartDockerTag: '$DOCKER_TAG'"
+            cat docs/_constants.md
+            exit 1
+          fi
+          echo "✅ _constants.md verified"
+
+      - name: Confirm the Next docs were not rewritten
+        run: |
+          set -euo pipefail
+          # The Helm reference is generated into the snapshot, never into Next.
+          # Next tracks agent-manager's main branch; regenerating it from a
+          # release tag would silently roll back every chart change merged since.
+          if ! git diff --quiet -- docs/reference/helm-charts/; then
+            echo "::error::The cut modified docs/reference/helm-charts/ (the Next docs). It must only write into versioned_docs/version-$VERSION/."
+            git diff --stat -- docs/reference/helm-charts/
+            exit 1
+          fi
+          echo "✅ Next docs untouched"
+
+      - name: Build the site
+        run: npm run build
+
+      - name: Open a pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add versioned_docs/ versioned_sidebars/ versions.json docs/_constants.md
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          BRANCH="docs/release-${VERSION}-${GITHUB_RUN_ID}"
+          git checkout -b "$BRANCH"
+          git commit -m "docs: release documentation version $VERSION"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "docs: release documentation version $VERSION" \
+            --body "$(printf "## Documentation Release\n\n- **Version:** %s\n- **Release tag:** amp/%s\n\n### Changes\n- Versioned snapshot at \`versioned_docs/version-%s\`\n- Helm chart reference regenerated from the charts at \`amp/%s\`\n- Version references updated from \`v0.0.0-dev\` to \`%s\`\n- \`_constants.md\` updated\n\nMerging this publishes the site.\n" \
+              "$VERSION" "$DOCKER_TAG" "$VERSION" "$DOCKER_TAG" "$DOCKER_TAG")")
+
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "✅ Opened $PR_URL"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Documentation Release $VERSION"
+            echo ""
+            echo "- Release tag: \`amp/$DOCKER_TAG\`"
+            echo "- Pull request: ${{ steps.pr.outputs.pr_url || 'no changes to publish' }}"
+            echo ""
+            echo "Merge the pull request to publish the site."
+          } >> "$GITHUB_STEP_SUMMARY"
