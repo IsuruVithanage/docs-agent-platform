@@ -15,7 +15,7 @@
 /*
  * Fonts are referenced RELATIVELY and live under src/css/ rather than static/.
  * This routes them through webpack's css-loader, which rewrites the URL with
- * the correct publicPath derived from baseUrl ('/agent-manager/'). ThunderID
+ * the correct publicPath derived from baseUrl ('/docs-agent-platform/'). ThunderID
  * uses absolute '/assets/fonts/...' URLs, which work only because they deploy
  * at a root baseUrl; copied verbatim they would 404 in production here while
  * still working in local dev.

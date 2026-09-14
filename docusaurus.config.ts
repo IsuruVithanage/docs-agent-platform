@@ -53,7 +53,7 @@ const config: Config = {
   url: 'https://wso2.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/agent-manager/',
+  baseUrl: '/docs-agent-platform/',
 
   // Set true for GitHub pages deployment.
   trailingSlash: true,
@@ -61,7 +61,7 @@ const config: Config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'wso2', // Usually your GitHub org/user name.
-  projectName: 'agent-manager', // Usually your repo name.
+  projectName: 'docs-agent-platform', // Usually your repo name.
 
   onBrokenLinks: 'throw',
 
@@ -137,7 +137,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/wso2/agent-manager/edit/main/documentation/',
+            'https://github.com/wso2/docs-agent-platform/edit/main/',
         },
         blog: false, // Disable blog until we have content
         theme: {

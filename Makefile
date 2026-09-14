@@ -1,4 +1,4 @@
-.PHONY: help install start build serve clean version update-version helm-reference
+.PHONY: help install start build serve clean version update-version
 
 # Cross-platform sed in-place: macOS uses "sed -i ''", Linux uses "sed -i"
 UNAME_S := $(shell uname -s)
@@ -18,9 +18,6 @@ help:
 	@echo "  make build            - Build static site"
 	@echo "  make serve            - Serve built site locally"
 	@echo "  make clean            - Clean build artifacts"
-	@echo ""
-	@echo "Helm Charts:"
-	@echo "  make helm-reference   - Regenerate reference/helm-charts from the charts' values.schema.json"
 	@echo ""
 	@echo "Versioning:"
 	@echo "  make version VERSION=v0.5.x DOCKER_TAG=v0.5.0         - Create new documentation version"
@@ -47,12 +44,13 @@ clean:
 	rm -rf build .docusaurus
 
 # Regenerate the Helm chart reference from each chart's values.schema.json.
-# Run before versioning so a snapshot captures the schema as it stood for that release.
-helm-reference:
-	@node scripts/gen-helm-reference.mjs
+# The Helm chart reference pages under docs/reference/helm-charts/ are generated
+# in wso2/agent-manager, where the chart schemas live, and pushed into this repo
+# by its release pipeline. There is nothing to generate here, so `version` and
+# `update-version` no longer depend on a helm-reference target.
 
 # Create a new documentation version
-version: helm-reference
+version:
 ifndef VERSION
 	@echo "Error: VERSION and DOCKER_TAG are required"
 	@echo "Usage: make version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
@@ -83,7 +81,7 @@ endif
 	fi
 
 # Recreate an existing documentation version (deletes and re-snapshots from current docs)
-update-version: helm-reference
+update-version:
 ifndef VERSION
 	@echo "Error: VERSION and DOCKER_TAG are required"
 	@echo "Usage: make update-version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
