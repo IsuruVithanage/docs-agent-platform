@@ -1,10 +1,10 @@
 /*
- * Docs landing page, modelled on the ThunderID docs home: a plain hero, a
- * bordered quickstart panel whose chip row changes with the selected path, then
- * a row of tall use-case cards with a "choose when" checklist.
+ * Docs landing page: a plain hero, a bordered quickstart panel whose chip row
+ * changes with the selected path, then a row of tall use-case cards with a
+ * "choose when" checklist.
  *
  * Everything is driven from Infima variables and the primary ramp defined in
- * thunder-theme.css, so this page inherits the ported look without redeclaring
+ * amp-theme.css, so this page inherits the site theme without redeclaring
  * fonts, colours or the page gradient.
  */
 

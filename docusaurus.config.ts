@@ -141,12 +141,12 @@ const config: Config = {
         },
         blog: false, // Disable blog until we have content
         theme: {
-          // Order matters: thunder-theme.css layers the ThunderID-inspired
-          // look over custom.css and relies on loading second to win on
-          // equal specificity. Do not reorder.
+          // Order matters: amp-theme.css layers the site theme over
+          // custom.css and relies on loading second to win on equal
+          // specificity. Do not reorder.
           customCss: [
             './src/css/custom.css',
-            './src/css/thunder-theme.css',
+            './src/css/amp-theme.css',
           ],
         },
       } satisfies Preset.Options,

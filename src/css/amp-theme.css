@@ -1,14 +1,19 @@
 /*
- * ThunderID-inspired theme layer for the Agent Manager documentation.
+ * Theme layer for the WSO2 Agent Manager documentation.
  *
  * Loaded AFTER src/css/custom.css (see docusaurus.config.ts), so it wins on
  * equal specificity without that file needing to change. custom.css owns the
  * DocSearch and announcement-bar styling and is deliberately left alone.
  *
  * Section order matters — tokens are defined before anything consumes them:
- *   2. Primary ramp     4. Page background   7. Sidebar        9.  Admonitions
- *   2. Primary ramp     5. Layout            8. Navbar / TOC   10. Responsive
- *   3. Typography       6. (see 5)
+ *   2.  Primary ramp      7a. Sidebar chrome          9.  Code blocks
+ *   4.  Typography        7b. Sidebar section headers 9b. Docs landing page
+ *   5.  Page background   8.  Navbar and TOC          10. Responsive
+ *   6.  Layout
+ *
+ * Numbering is not contiguous: sections 1 (@font-face) and 3 were removed when
+ * the bundled webfonts were dropped. The remaining numbers are left as they are
+ * so existing references to "section 7b" or "section 9" stay valid.
  */
 
 /* =========================== 2. Primary ramp ============================ */
@@ -91,7 +96,7 @@ h5 {
   margin-top: 1.75rem;
 }
 
-/* Infima defaults prose to 0.875rem; ThunderID runs it at 1rem. */
+/* Infima defaults prose to 0.875rem; 1rem reads better at this measure. */
 .markdown {
   font-size: 1rem;
 }
@@ -140,7 +145,7 @@ h5 {
 
 /* ========================= 5. Page background =========================== */
 /*
- * ThunderID's gradients are blue; these are the same geometry re-tinted to
+ * The reference design's gradients are blue; these are the same geometry re-tinted to
  * WSO2 orange per the spec's palette decision.
  */
 
@@ -175,10 +180,10 @@ html #__docusaurus {
  * This list covers the wrappers present in the current markup at the
  * sidebar/content split (#__docusaurus > .main-wrapper > [docsWrapper] >
  * [docRoot] > [docSidebarContainer] | [docMainContainer]) — it is not a
- * guarantee against every future wrapper. ThunderID's `[class*='docPage_']`
+ * guarantee against every future wrapper. The upstream `[class*='docPage_']`
  * wrapper was dropped: current @docusaurus/theme-classic renamed that
  * wrapper (it now uses `docRoot`/`docsWrapper`), so `docPage_` matches zero
- * elements here. Do not restore it from ThunderID's CSS. Recheck this list
+ * elements here. Do not restore it from the reference CSS. Recheck this list
  * after any @docusaurus/theme-classic upgrade, since class names here
  * (`docRoot`, `docsWrapper`, `docMainContainer`) are internal, not the
  * stable `theme-*` public API.
@@ -199,7 +204,7 @@ html[data-theme='dark'] [class*='docMainContainer'] {
   --ifm-container-width: 1600px;
   --ifm-container-width-xl: 1600px;
   /*
-   * `--ifm-spacing-horizontal` is deliberately NOT overridden. ThunderID sets
+   * `--ifm-spacing-horizontal` is deliberately NOT overridden. The reference design sets
    * it to 2rem, and doing so here caused a horizontal overflow: Infima uses it
    * for `.container` padding AND for `.row`'s negative margin
    * (`margin: 0 calc(var(--ifm-spacing-horizontal) * -1)`). Those two cancel
@@ -273,10 +278,10 @@ html[data-theme='dark'] [class*='docMainContainer'] {
  * substring `admonition` only ever appears inside longer tokens like
  * `theme-admonition` and hashed `admonition_xJq3`). `theme-admonition` is
  * Docusaurus's stable public class for this component, unlike the hashed
- * CSS-module classes, which change between builds. ThunderID's
+ * CSS-module classes, which change between builds. The upstream
  * `[class*='card']` entry was dropped: no page in this site currently
  * renders a `@theme/Card`-family component inside doc markdown, so it
- * matches zero elements here. Do not restore it from ThunderID's CSS.
+ * matches zero elements here. Do not restore it from the reference CSS.
  */
 .theme-doc-markdown.markdown table,
 .theme-doc-markdown.markdown pre,
@@ -312,7 +317,7 @@ html[data-theme='dark'] [class*='docMainContainer'] {
 }
 
 /*
- * ThunderID uses 5rem of right padding here. Agent Manager has much longer
+ * The reference design uses 5rem of right padding here. Agent Manager has much longer
  * sidebar labels ("Agent Identity and Access Management"), so 2rem is used
  * instead to keep them from wrapping three deep inside a 360px rail.
  */
@@ -772,7 +777,7 @@ div[class*='col--3'] {
 /* ---- Inline code pills ---- */
 
 /*
- * ThunderID colors this text with --ifm-color-primary-light unconditionally.
+ * The reference design colors this text with --ifm-color-primary-light unconditionally.
  * Measured (WCAG relative-luminance formula) against this pill's own
  * background — 8% #fa7b3f mixed into white, ≈ #fff4f0 in light mode — that
  * gives only 2.07:1, far under AA's 4.5:1 for normal text. Checked the whole
@@ -781,7 +786,7 @@ div[class*='col--3'] {
  * that is the default (light-mode) color below. Dark mode does not have this
  * problem: against its own pill background (8% dark-ramp base #fb8c55 mixed
  * into #1b1b1d, ≈ #2d2421), --ifm-color-primary-light (#fca17a) measures
- * 7.59:1, so dark mode keeps ThunderID's original choice via the override
+ * 7.59:1, so dark mode keeps that original choice via the override
  * that follows.
  */
 .markdown code:not([class*='language-']):not(pre code) {
@@ -837,7 +842,7 @@ div[class*='col--3'] {
   border-radius: 8px;
   box-shadow: none;
   /*
-   * 1.1rem, not ThunderID's 1rem, to match the paragraph rhythm set in Task 2.
+   * 1.1rem, not the reference design's 1rem, to match the paragraph rhythm above.
    * Docusaurus wraps every <pre> in this container div, so `.markdown > pre`
    * never matches and this rule is the ONLY thing controlling the gap between a
    * code block and the prose after it. At 1rem that gap would be visibly tighter
@@ -879,7 +884,7 @@ div[class*='col--3'] {
  * `theme-admonition ... admonition_<hash> alert alert--<kind>` with
  * `admonitionHeading_<hash>` and `admonitionContent_<hash>` inside. The bare
  * classes `.admonition`, `.admonition-heading` and `.admonition-content` that
- * ThunderID's stylesheet uses match ZERO elements here (exact-token counts: 0,
+ * the reference stylesheet uses match ZERO elements here (exact-token counts: 0,
  * 0, 0 across all v1.0.0 pages, vs 161 each for the hashed forms). Use the
  * stable `theme-` class and attribute-substring matches for the hashed ones.
  */
@@ -891,7 +896,7 @@ div[class*='col--3'] {
 }
 
 /*
- * ThunderID's Docusaurus version renders the admonition title inside a
+ * Another Docusaurus version renders the admonition title inside a
  * nested <h5>; this repo's version does not. Its compiled Admonition/Layout
  * component (node_modules/@docusaurus/theme-classic) renders the heading as
  * a plain `<div className={styles.admonitionHeading}><span
