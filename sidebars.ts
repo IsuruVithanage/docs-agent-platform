@@ -150,7 +150,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
-          id: 'guides/build-a-ballerina-agent',
+          id: 'tutorials/build-a-ballerina-agent',
           label: 'Deploy the Ballerina Leave Assistant Sample',
         },
       ],
