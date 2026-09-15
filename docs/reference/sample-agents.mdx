@@ -44,9 +44,7 @@ This is the smallest sample that produces `agent` and `crewaitask` spans, so it 
 - **Requires** — `OPENAI_API_KEY`
 - **Installs** — `crewai==1.15.2`
 
-:::warning CrewAI needs a writable home directory
-Set `HOME=/tmp` and `CREWAI_STORAGE_DIR=/tmp/crewai` as environment variables on the agent. CrewAI writes under `$HOME` when it is imported, before your code runs, and the build container's default home is not writable. Without these the agent fails at startup rather than at request time.
-:::
+CrewAI writes under `$HOME` when it is imported and again when a crew is constructed, and the build container's default home is not writable. The sample already handles this: `app.py` sets `CREWAI_STORAGE_DIR` and falls back to `HOME=/tmp` when the real home is read-only, before CrewAI is imported. Keep that preamble if you adapt the sample, or set `HOME` and `CREWAI_STORAGE_DIR` to writable paths on the agent yourself.
 
 Run it locally:
 
