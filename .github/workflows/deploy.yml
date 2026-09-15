@@ -4,6 +4,18 @@ on:
   push:
     branches:
       - main
+    # Deploy when the site's own content changes. Repository furniture cannot
+    # alter the rendered output, so republishing for it wastes a build and a
+    # Pages deployment. paths-ignore rather than paths: a new top-level site
+    # directory should publish by default rather than be silently skipped until
+    # someone remembers to add it here.
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - 'issue_template.md'
+      - 'pull_request_template.md'
+      - '.github/**'
+      - '.claude/**'
   workflow_dispatch:
 
 # Two deploys racing would publish whichever finishes last, which may be the

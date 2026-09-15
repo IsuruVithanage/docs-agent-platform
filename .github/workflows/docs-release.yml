@@ -1,10 +1,6 @@
 name: Documentation Release
 
-# Run manually when an agent-manager release should be documented. This is the
-# same flow that used to live in wso2/agent-manager as docs-release.yml; only the
-# repository it runs in has changed.
-#
-# It cuts a versioned snapshot, regenerates that snapshot's Helm chart reference
+# This cuts a versioned snapshot, regenerates that snapshot's Helm chart reference
 # from the charts at the release tag, and opens a PR. Merging the PR triggers
 # deploy.yml, which publishes the site.
 
@@ -19,8 +15,13 @@ on:
         description: "Release version tag (for Docker images and Helm charts - e.g., v1.1.0)"
         required: true
         type: string
+      recreate:
+        description: "Replace an EXISTING version. Re-cuts the snapshot from the current Next docs, which may include unreleased content."
+        required: false
+        default: false
+        type: boolean
 
-run-name: Documentation Release ${{ inputs.version }}
+run-name: Documentation Release ${{ inputs.version }}${{ inputs.recreate && ' (re-cut)' || '' }}
 
 jobs:
   release-docs:
@@ -32,6 +33,7 @@ jobs:
     env:
       VERSION: ${{ inputs.version }}
       DOCKER_TAG: ${{ inputs.docker_tag }}
+      RECREATE: ${{ inputs.recreate }}
     steps:
       - name: Validate inputs
         run: |
@@ -68,19 +70,39 @@ jobs:
           fi
           echo "✅ Found tag amp/$DOCKER_TAG"
 
-      - name: Check the version does not already exist
+      - name: Check the version against the chosen mode
         run: |
           set -euo pipefail
           if grep -q "\"$VERSION\"" versions.json; then
-            echo "::error::Version $VERSION already exists in versions.json"
-            exit 1
+            EXISTS=true
+          else
+            EXISTS=false
+          fi
+
+          if [ "$RECREATE" = "true" ]; then
+            if [ "$EXISTS" != "true" ]; then
+              echo "::error::recreate was requested but $VERSION does not exist. Run without recreate to cut it."
+              exit 1
+            fi
+            echo "::warning::Re-cutting $VERSION. The snapshot is rebuilt from the CURRENT Next docs, so anything merged to agent-manager's main since $DOCKER_TAG shipped - including unreleased features - will be published as $VERSION. Review the pull request diff carefully before merging."
+          else
+            if [ "$EXISTS" = "true" ]; then
+              echo "::error::Version $VERSION already exists. Re-run with recreate enabled to replace it, or edit versioned_docs/version-$VERSION/ directly for a small fix."
+              exit 1
+            fi
           fi
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Create documentation version
-        run: make version VERSION="$VERSION" DOCKER_TAG="$DOCKER_TAG"
+      - name: Create or recreate the documentation version
+        run: |
+          set -euo pipefail
+          if [ "$RECREATE" = "true" ]; then
+            make update-version VERSION="$VERSION" DOCKER_TAG="$DOCKER_TAG"
+          else
+            make version VERSION="$VERSION" DOCKER_TAG="$DOCKER_TAG"
+          fi
 
       - name: Verify version replacement
         run: |
@@ -142,13 +164,13 @@ jobs:
 
           BRANCH="docs/release-${VERSION}-${GITHUB_RUN_ID}"
           git checkout -b "$BRANCH"
-          git commit -m "docs: release documentation version $VERSION"
+          git commit -m "docs: ${{ inputs.recreate && 're-cut' || 'release' }} documentation version $VERSION"
           git push origin "$BRANCH"
 
           PR_URL=$(gh pr create \
             --base main \
             --head "$BRANCH" \
-            --title "docs: release documentation version $VERSION" \
+            --title "docs: ${{ inputs.recreate && 're-cut' || 'release' }} documentation version $VERSION" \
             --body "$(printf "## Documentation Release\n\n- **Version:** %s\n- **Release tag:** amp/%s\n\n### Changes\n- Versioned snapshot at \`versioned_docs/version-%s\`\n- Helm chart reference regenerated from the charts at \`amp/%s\`\n- Version references updated from \`v0.0.0-dev\` to \`%s\`\n- \`_constants.md\` updated\n\nMerging this publishes the site.\n" \
               "$VERSION" "$DOCKER_TAG" "$VERSION" "$DOCKER_TAG" "$DOCKER_TAG")")
 

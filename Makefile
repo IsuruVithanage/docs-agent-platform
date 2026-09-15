@@ -93,7 +93,18 @@ endif
 		echo "✓ Replaced version placeholders in versioned_docs/version-$(VERSION)"; \
 	fi
 
-# Recreate an existing documentation version (deletes and re-snapshots from current docs)
+# Recreate an existing documentation version.
+#
+# DANGER: this deletes the snapshot and re-cuts it from the CURRENT docs/ tree.
+# docs/ tracks agent-manager's main branch, so anything merged there since the
+# release - including unreleased features - lands in the re-cut snapshot and is
+# published as though it shipped in $(VERSION). Only use this when a snapshot is
+# structurally wrong (bad sidebar, missing pages, failed substitution). To fix a
+# typo in published docs, edit versioned_docs/version-$(VERSION)/ directly.
+#
+# The Helm reference is regenerated from the amp/$(DOCKER_TAG) tag, matching the
+# `version` target, so the charts stay pinned to the release even though the
+# prose comes from Next.
 update-version:
 ifndef VERSION
 	@echo "Error: VERSION and DOCKER_TAG are required"
@@ -114,6 +125,10 @@ endif
 	@node -e "const v=require('./versions.json');v.splice(v.indexOf('$(VERSION)'),1);require('fs').writeFileSync('versions.json',JSON.stringify(v,null,2)+'\n')"
 	@echo "Recreating version $(VERSION)..."
 	@npm run docusaurus docs:version $(VERSION)
+	@echo "Regenerating the Helm chart reference from the $(DOCKER_TAG) charts..."
+	@node scripts/gen-helm-reference.mjs \
+		--tag amp/$(DOCKER_TAG) \
+		--out versioned_docs/version-$(VERSION)/reference/helm-charts
 	@echo "Replacing version placeholders in versioned docs..."
 	@DOCKER_TAG_NO_V=$$(echo $(DOCKER_TAG) | sed 's/^v//'); \
 	find ./versioned_docs/version-$(VERSION) -type f \( -name "*.md" -o -name "*.mdx" \) ! -name "_constants.md" -exec \
