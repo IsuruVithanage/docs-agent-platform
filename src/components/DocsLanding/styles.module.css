@@ -1,0 +1,241 @@
+/*
+ * Everything is driven from Infima variables and the primary ramp defined in
+ * amp-theme.css, so this page inherits the site theme without redeclaring
+ * fonts, colours or the page gradient.
+ */
+
+.page {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 2.5rem 1rem 4rem;
+}
+
+/* -------------------------------- Search -------------------------------- */
+
+.search {
+  align-items: center;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+  display: flex;
+  gap: 0.85rem;
+  margin-bottom: 2.25rem;
+  max-width: 620px;
+  padding: 0.85rem 1.4rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search:focus-within {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+}
+
+.searchIcon {
+  align-items: center;
+  color: var(--ifm-color-emphasis-600);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.searchIcon svg {
+  height: 20px;
+  width: 20px;
+}
+
+/*
+ * A bare input inherits none of the page's type styling and, on WebKit, gets a
+ * platform search appearance with its own inner padding and a cancel button
+ * that sits awkwardly inside the pill. Reset both.
+ */
+.searchInput {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--ifm-font-color-base);
+  flex: 1;
+  font-family: inherit;
+  font-size: 1.0625rem;
+  min-width: 0;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--ifm-color-emphasis-600);
+}
+
+.searchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* ------------------------------- Welcome -------------------------------- */
+
+.welcome {
+  color: var(--ifm-color-emphasis-800);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  max-width: 44rem;
+}
+
+/* -------------------------------- Grid ---------------------------------- */
+
+.grid {
+  align-items: start;
+  display: grid;
+  gap: 1.15rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/*
+ * Get Started and Guides carry far more links than the other two, so they span
+ * both rows and the short cards stack in the third column. Without the span the
+ * grid would stretch every card to the tallest, leaving the short ones mostly
+ * empty.
+ */
+.cardTall {
+  grid-row: span 2;
+}
+
+/* -------------------------------- Card ---------------------------------- */
+
+.card {
+  background: color-mix(in srgb, var(--ifm-background-surface-color) 70%, transparent);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 14px;
+  padding: 1.5rem 1.6rem 1.7rem;
+  transition: border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+.cardHead {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.35rem;
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.cardIcon {
+  align-items: center;
+  border-radius: 50%;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 2.6rem;
+  justify-content: center;
+  width: 2.6rem;
+}
+
+.cardIcon svg {
+  height: 20px;
+  width: 20px;
+}
+
+/*
+ * One accent per card, matching the reference design. These are intentionally
+ * not the brand orange: the orange is reserved for the link arrows, so the
+ * icons read as category markers rather than as calls to action.
+ */
+.blue {
+  background: color-mix(in srgb, #3b82f6 16%, transparent);
+  color: #3b82f6;
+}
+
+.orange {
+  background: color-mix(in srgb, var(--ifm-color-primary) 16%, transparent);
+  color: var(--ifm-color-primary);
+}
+
+.teal {
+  background: color-mix(in srgb, #14b8a6 16%, transparent);
+  color: #14b8a6;
+}
+
+.pink {
+  background: color-mix(in srgb, #ec4899 16%, transparent);
+  color: #ec4899;
+}
+
+/* -------------------------------- Links --------------------------------- */
+
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cardList li + li {
+  margin-top: 0.15rem;
+}
+
+.cardLink {
+  align-items: baseline;
+  border-radius: 6px;
+  color: var(--ifm-font-color-base);
+  display: flex;
+  font-size: 0.975rem;
+  gap: 0.75rem;
+  margin: 0 -0.5rem;
+  padding: 0.45rem 0.5rem;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cardLink:hover {
+  background: color-mix(in srgb, var(--ifm-color-emphasis-200) 45%, transparent);
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.arrow {
+  color: var(--ifm-color-primary);
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  transition: transform 0.15s ease;
+}
+
+.cardLink:hover .arrow {
+  transform: translateX(2px);
+}
+
+/* ------------------------------ Responsive ------------------------------ */
+
+@media (max-width: 996px) {
+  .page {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /*
+   * The row span only makes sense against the three-column layout. Leaving it
+   * on at two columns strands the short cards in a half-height column.
+   */
+  .cardTall {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+  .searchInput {
+    font-size: 1rem;
+  }
+}

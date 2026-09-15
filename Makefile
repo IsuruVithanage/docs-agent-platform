@@ -1,0 +1,141 @@
+.PHONY: help install start build serve clean version update-version
+
+# Cross-platform sed in-place: macOS uses "sed -i ''", Linux uses "sed -i"
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	SED_INPLACE := sed -i ''
+else
+	SED_INPLACE := sed -i
+endif
+
+# Default target
+help:
+	@echo "WSO2 Agent Manager Documentation - Available Commands"
+	@echo ""
+	@echo "Development:"
+	@echo "  make install          - Install dependencies"
+	@echo "  make start            - Start development server"
+	@echo "  make build            - Build static site"
+	@echo "  make serve            - Serve built site locally"
+	@echo "  make clean            - Clean build artifacts"
+	@echo ""
+	@echo "Versioning:"
+	@echo "  make version VERSION=v0.5.x DOCKER_TAG=v0.5.0         - Create new documentation version"
+	@echo "  make update-version VERSION=v0.5.x DOCKER_TAG=v0.5.0  - Recreate existing documentation version"
+
+# Install dependencies
+install:
+	npm install
+
+# Start development server
+start:
+	npm run start
+
+# Build the site
+build:
+	npm run build
+
+# Serve the built site
+serve:
+	npm run serve
+
+# Clean build artifacts
+clean:
+	rm -rf build .docusaurus
+
+# Regenerate the Helm chart reference from each chart's values.schema.json.
+# The Helm chart reference pages under docs/reference/helm-charts/ are generated
+# in wso2/agent-manager, where the chart schemas live, and pushed into this repo
+# by its release pipeline. There is nothing to generate here, so `version` and
+# `update-version` no longer depend on a helm-reference target.
+
+# Create a new documentation version.
+#
+# The Helm chart reference is regenerated AFTER the snapshot is taken, writing
+# directly into versioned_docs/version-$(VERSION)/. The charts live in the public
+# wso2/agent-manager repo and are fetched at the amp/$(DOCKER_TAG) tag, so the
+# snapshot documents the charts as they stood for that release.
+#
+# It deliberately does not regenerate the Next docs: those track agent-manager's
+# main branch, and rewriting them from a release tag would silently roll back
+# every chart change merged since that release.
+version:
+ifndef VERSION
+	@echo "Error: VERSION and DOCKER_TAG are required"
+	@echo "Usage: make version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
+	@exit 1
+endif
+ifndef DOCKER_TAG
+	@echo "Error: VERSION and DOCKER_TAG are required"
+	@echo "Usage: make version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
+	@exit 1
+endif
+	@echo "Creating documentation version $(VERSION)..."
+	@if grep -q "\"$(VERSION)\"" versions.json 2>/dev/null; then \
+		echo "⚠ Version $(VERSION) already exists"; \
+		exit 1; \
+	else \
+		npm run docusaurus docs:version $(VERSION); \
+		echo "Regenerating the Helm chart reference from the $(DOCKER_TAG) charts..."; \
+		node scripts/gen-helm-reference.mjs \
+			--tag amp/$(DOCKER_TAG) \
+			--out versioned_docs/version-$(VERSION)/reference/helm-charts; \
+		echo "Replacing version placeholders in versioned docs..."; \
+		DOCKER_TAG_NO_V=$$(echo $(DOCKER_TAG) | sed 's/^v//'); \
+		find ./versioned_docs/version-$(VERSION) -type f \( -name "*.md" -o -name "*.mdx" \) ! -name "_constants.md" -exec \
+			$(SED_INPLACE) "s/v0\.0\.0-dev/$(DOCKER_TAG)/g; s/0\.0\.0-dev/$$DOCKER_TAG_NO_V/g" {} \;; \
+		$(SED_INPLACE) "s/latestVersion: '.*'/latestVersion: '$(VERSION)'/" versioned_docs/version-$(VERSION)/_constants.md; \
+		$(SED_INPLACE) "s/quickStartDockerTag: '.*'/quickStartDockerTag: '$(DOCKER_TAG)'/" versioned_docs/version-$(VERSION)/_constants.md; \
+		$(SED_INPLACE) "s/latestVersion: '.*'/latestVersion: '$(VERSION)'/" docs/_constants.md; \
+		$(SED_INPLACE) "s/quickStartDockerTag: '.*'/quickStartDockerTag: '$(DOCKER_TAG)'/" docs/_constants.md; \
+		echo "✓ Version $(VERSION) created successfully!"; \
+		echo "✓ Updated docs/_constants.md with latestVersion: $(VERSION) and quickStartDockerTag: $(DOCKER_TAG)"; \
+		echo "✓ Replaced version placeholders in versioned_docs/version-$(VERSION)"; \
+	fi
+
+# Recreate an existing documentation version.
+#
+# DANGER: this deletes the snapshot and re-cuts it from the CURRENT docs/ tree.
+# docs/ tracks agent-manager's main branch, so anything merged there since the
+# release - including unreleased features - lands in the re-cut snapshot and is
+# published as though it shipped in $(VERSION). Only use this when a snapshot is
+# structurally wrong (bad sidebar, missing pages, failed substitution). To fix a
+# typo in published docs, edit versioned_docs/version-$(VERSION)/ directly.
+#
+# The Helm reference is regenerated from the amp/$(DOCKER_TAG) tag, matching the
+# `version` target, so the charts stay pinned to the release even though the
+# prose comes from Next.
+update-version:
+ifndef VERSION
+	@echo "Error: VERSION and DOCKER_TAG are required"
+	@echo "Usage: make update-version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
+	@exit 1
+endif
+ifndef DOCKER_TAG
+	@echo "Error: VERSION and DOCKER_TAG are required"
+	@echo "Usage: make update-version VERSION=v0.5.x DOCKER_TAG=v0.5.0"
+	@exit 1
+endif
+	@if ! grep -q "\"$(VERSION)\"" versions.json 2>/dev/null; then \
+		echo "⚠ Version $(VERSION) does not exist. Use 'make version' to create it."; \
+		exit 1; \
+	fi
+	@echo "Removing existing version $(VERSION)..."
+	@rm -rf versioned_docs/version-$(VERSION) versioned_sidebars/version-$(VERSION)-sidebars.json
+	@node -e "const v=require('./versions.json');v.splice(v.indexOf('$(VERSION)'),1);require('fs').writeFileSync('versions.json',JSON.stringify(v,null,2)+'\n')"
+	@echo "Recreating version $(VERSION)..."
+	@npm run docusaurus docs:version $(VERSION)
+	@echo "Regenerating the Helm chart reference from the $(DOCKER_TAG) charts..."
+	@node scripts/gen-helm-reference.mjs \
+		--tag amp/$(DOCKER_TAG) \
+		--out versioned_docs/version-$(VERSION)/reference/helm-charts
+	@echo "Replacing version placeholders in versioned docs..."
+	@DOCKER_TAG_NO_V=$$(echo $(DOCKER_TAG) | sed 's/^v//'); \
+	find ./versioned_docs/version-$(VERSION) -type f \( -name "*.md" -o -name "*.mdx" \) ! -name "_constants.md" -exec \
+		$(SED_INPLACE) "s/v0\.0\.0-dev/$(DOCKER_TAG)/g; s/0\.0\.0-dev/$$DOCKER_TAG_NO_V/g" {} \;
+	@$(SED_INPLACE) "s/latestVersion: '.*'/latestVersion: '$(VERSION)'/" versioned_docs/version-$(VERSION)/_constants.md
+	@$(SED_INPLACE) "s/quickStartDockerTag: '.*'/quickStartDockerTag: '$(DOCKER_TAG)'/" versioned_docs/version-$(VERSION)/_constants.md
+	@$(SED_INPLACE) "s/latestVersion: '.*'/latestVersion: '$(VERSION)'/" docs/_constants.md
+	@$(SED_INPLACE) "s/quickStartDockerTag: '.*'/quickStartDockerTag: '$(DOCKER_TAG)'/" docs/_constants.md
+	@echo "✓ Version $(VERSION) updated successfully!"
+	@echo "✓ Replaced version placeholders in versioned_docs/version-$(VERSION)"
