@@ -1,7 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
-import { useLocation } from '@docusaurus/router';
+import { useHistory, useLocation } from '@docusaurus/router';
+import { useDocsVersion } from '@docusaurus/plugin-content-docs/client';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 import styles from './styles.module.css';
 
@@ -26,303 +28,246 @@ function useDocPath(): (path: string) => string {
 /* ------------------------------- Icons -------------------------------- */
 
 const svg = (children: ReactNode) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {children}
   </svg>
 );
 
-const iconPlatform = svg(
+const iconRocket = svg(
   <>
-    <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
-    <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
-    <line x1="6" x2="6.01" y1="6" y2="6" />
-    <line x1="6" x2="6.01" y1="18" y2="18" />
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
   </>,
 );
 
-const iconAgent = svg(
+const iconBook = svg(
   <>
-    <rect width="18" height="10" x="3" y="11" rx="2" />
-    <circle cx="12" cy="5" r="2" />
-    <path d="M12 7v4" />
-    <line x1="8" x2="8" y1="16" y2="16" />
-    <line x1="16" x2="16" y1="16" y2="16" />
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
   </>,
 );
 
-const iconMcp = svg(
+const iconTools = svg(
   <>
-    <path d="M12 3 2 8l10 5 10-5-10-5Z" />
-    <path d="m2 16 10 5 10-5" />
-    <path d="m2 12 10 5 10-5" />
+    <path d="M6 3v12" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="18" cy="6" r="3" />
+    <path d="M18 9v1a3 3 0 0 1-3 3H9" />
   </>,
 );
 
-const iconCheck = svg(
+const iconBulb = svg(
   <>
-    <circle cx="12" cy="12" r="10" />
-    <path d="m9 12 2 2 4-4" />
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
   </>,
 );
 
-const iconDownload = svg(
-  <>
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" x2="12" y1="15" y2="3" />
-  </>,
-);
+/* -------------------------------- Cards -------------------------------- */
 
-const iconObserve = svg(
-  <>
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-    <circle cx="12" cy="12" r="3" />
-  </>,
-);
+type CardLink = { label: string; to: string; external?: boolean };
 
-const iconShield = svg(
-  <>
-    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-  </>,
-);
-
-const iconGovern = svg(
-  <>
-    <path d="M3 21h18" />
-    <path d="M5 21V7l8-4v18" />
-    <path d="M19 21V11l-6-4" />
-  </>,
-);
-
-/* --------------------------- Quickstart paths -------------------------- */
-
-type PathKey = 'platform' | 'agent' | 'mcp';
-
-type PathOption = {
-  key: PathKey;
-  label: string;
-  blurb: string;
-  icon: ReactNode;
-  quickstarts: { label: string; href: string }[];
-  sidebarHint: string;
-};
-
-const PATHS: PathOption[] = [
-  {
-    key: 'platform',
-    label: 'Platform',
-    blurb: 'Install and run Agent Manager itself.',
-    icon: iconPlatform,
-    quickstarts: [
-      { label: 'Local (k3d)', href: 'guides/on-k3d' },
-      { label: 'Your cluster', href: 'guides/on-your-environment' },
-      { label: 'On a VM', href: 'guides/on-a-vm' },
-      { label: 'CLI', href: 'guides/cli-installation' },
-    ],
-    sidebarHint: 'All installation guides are available in the sidebar.',
-  },
-  {
-    key: 'agent',
-    label: 'AI Agent',
-    blurb: 'Build, deploy and govern agents.',
-    icon: iconAgent,
-    quickstarts: [
-      { label: 'First agent', href: 'tutorials/create-your-first-agent' },
-      { label: 'Internal vs external', href: 'concepts/internal-and-external-agent' },
-      { label: 'Agent lifecycle', href: 'concepts/agent-lifecycle' },
-      { label: 'LLM providers', href: 'guides/register-llm-service-provider' },
-    ],
-    sidebarHint: 'All agent tutorials and guides are available in the sidebar.',
-  },
-  {
-    key: 'mcp',
-    label: 'MCP',
-    blurb: 'Connect tools through a governed proxy.',
-    icon: iconMcp,
-    quickstarts: [
-      { label: 'Register a proxy', href: 'guides/register-mcp-proxy' },
-      { label: 'Authorize tools', href: 'guides/authorize-agent-access-to-mcp-tools' },
-      { label: 'Attach to an agent', href: 'guides/configure-agent-mcp-proxies' },
-      { label: 'MCP server', href: 'reference/mcp-server' },
-    ],
-    sidebarHint: 'All MCP guides and references are available in the sidebar.',
-  },
-];
-
-/* ------------------------------ Use cases ------------------------------ */
-
-type UseCase = {
-  eyebrow: string;
+type Card = {
   title: string;
-  description: string;
-  chooseWhen: string[];
-  href: string;
   icon: ReactNode;
+  accent: 'blue' | 'orange' | 'teal' | 'pink';
+  tall?: boolean;
+  links: CardLink[];
 };
 
-const USE_CASES: UseCase[] = [
+const CARDS: Card[] = [
   {
-    eyebrow: 'Run & govern',
-    title: 'Agents in production',
-    description:
-      'Deploy agents across environments with a promotion pipeline, sandboxing and per-environment configuration.',
-    chooseWhen: [
-      'You need dev, staging and production environments',
-      'Agents must be promoted under review, not redeployed by hand',
-      'Workloads need isolation between tenants',
+    title: 'Get Started',
+    icon: iconRocket,
+    accent: 'blue',
+    tall: true,
+    links: [
+      { label: 'What is Agent Manager', to: 'get-started/what-is-amp' },
+      { label: 'Quick Start Guide', to: 'get-started/quick-start' },
+      { label: 'Install on k3d (Locally)', to: 'guides/on-k3d' },
+      { label: 'Install on Your Environment', to: 'guides/on-your-environment' },
+      { label: 'Install on a VM', to: 'guides/on-a-vm' },
+      { label: 'Install the CLI', to: 'guides/cli-installation' },
+      { label: 'Create Your First Agent', to: 'tutorials/create-your-first-agent' },
+      { label: 'Monitor an Agent', to: 'tutorials/observe-first-agent' },
     ],
-    href: 'concepts/deployment-pipeline',
-    icon: iconGovern,
   },
   {
-    eyebrow: 'Observe & evaluate',
-    title: 'Know what your agents did',
-    description:
-      'Capture traces across every agent call, then score behaviour with built-in and custom evaluators.',
-    chooseWhen: [
-      'You need to debug why an agent produced an answer',
-      'Quality has to be measured, not eyeballed',
-      'Regressions should surface before users find them',
+    title: 'Guides',
+    icon: iconBook,
+    accent: 'orange',
+    tall: true,
+    links: [
+      { label: 'LLM service providers', to: 'guides/register-llm-service-provider' },
+      { label: 'Agent LLM configuration', to: 'guides/configure-agent-llm-configuration' },
+      { label: 'MCP proxies', to: 'guides/register-mcp-proxy' },
+      { label: 'Authorize agent tool access', to: 'guides/authorize-agent-access-to-mcp-tools' },
+      { label: 'Secure endpoints with API keys', to: 'guides/secure-agent-endpoints-with-api-keys' },
+      { label: 'JWT authentication', to: 'guides/secure-agents-with-jwt-authentication' },
+      { label: 'Custom evaluators', to: 'guides/custom-evaluators' },
+      { label: 'Environment management', to: 'guides/environment-management' },
     ],
-    href: 'concepts/observability',
-    icon: iconObserve,
   },
   {
-    eyebrow: 'Secure',
-    title: 'Identity for agents',
-    description:
-      'Give every agent a verifiable identity, then control what it can reach with gateway policy and scoped access.',
-    chooseWhen: [
-      'Agents call APIs on their own or on behalf of users',
-      'Endpoints need API keys or JWT authentication',
-      'Tool access must be authorized per agent',
+    title: 'Developer Resources',
+    icon: iconTools,
+    accent: 'teal',
+    links: [
+      { label: 'CLI reference', to: 'reference/cli/overview' },
+      { label: 'Helm charts', to: 'reference/helm-charts' },
+      { label: 'MCP server', to: 'reference/mcp-server' },
+      { label: 'Authorization', to: 'reference/authorization' },
     ],
-    href: 'concepts/agentid',
-    icon: iconShield,
+  },
+  {
+    title: 'Community and Support',
+    icon: iconBulb,
+    accent: 'pink',
+    links: [
+      { label: 'Contributing', to: 'contributing' },
+      { label: 'GitHub Discussions', to: 'https://github.com/wso2/agent-manager/discussions', external: true },
+      { label: 'Report an Issue', to: 'https://github.com/wso2/agent-manager/issues', external: true },
+    ],
   },
 ];
+
+/*
+ * Cloud is hosted, so it ships no installation guides, no quick start, no
+ * reference section and no contributing page. Pointing the shared card set at
+ * those paths fails the build under onBrokenLinks: 'throw' — which is exactly
+ * how this was caught. Cloud therefore gets its own set: no Developer Resources
+ * card at all, and a Get Started card built from what it actually has.
+ */
+const CLOUD_CARDS: Card[] = [
+  {
+    title: 'Get Started',
+    icon: iconRocket,
+    accent: 'blue',
+    tall: true,
+    links: [
+      { label: 'What is Agent Manager', to: 'get-started/what-is-amp' },
+      { label: 'Install the CLI', to: 'guides/cli-installation' },
+      { label: 'Create Your First Agent', to: 'tutorials/create-your-first-agent' },
+      { label: 'Monitor an Agent', to: 'tutorials/observe-first-agent' },
+      { label: 'Environment management', to: 'guides/environment-management' },
+    ],
+  },
+  {
+    title: 'Guides',
+    icon: iconBook,
+    accent: 'orange',
+    tall: true,
+    links: [
+      { label: 'LLM service providers', to: 'guides/register-llm-service-provider' },
+      { label: 'Agent LLM configuration', to: 'guides/configure-agent-llm-configuration' },
+      { label: 'MCP proxies', to: 'guides/register-mcp-proxy' },
+      { label: 'Authorize agent tool access', to: 'guides/authorize-agent-access-to-mcp-tools' },
+      { label: 'Secure endpoints with API keys', to: 'guides/secure-agent-endpoints-with-api-keys' },
+      { label: 'JWT authentication', to: 'guides/secure-agents-with-jwt-authentication' },
+      { label: 'Custom evaluators', to: 'guides/custom-evaluators' },
+      { label: 'Trace sampling', to: 'guides/configure-trace-sampling' },
+    ],
+  },
+  {
+    title: 'Community and Support',
+    icon: iconBulb,
+    accent: 'pink',
+    links: [
+      { label: 'GitHub Discussions', to: 'https://github.com/wso2/agent-manager/discussions', external: true },
+      { label: 'Report an Issue', to: 'https://github.com/wso2/agent-manager/issues', external: true },
+    ],
+  },
+];
+
+/* ------------------------------- Search -------------------------------- */
+
+function SearchBar(): ReactNode {
+  const [query, setQuery] = useState('');
+  const history = useHistory();
+  const searchPath = useBaseUrl('/search');
+
+  /*
+   * docusaurus-lunr-search ships a /search page that reads the `q` parameter,
+   * so this is a real search rather than a decorative box: submitting hands the
+   * query to the same index the navbar search uses.
+   */
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    history.push(`${searchPath}?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  return (
+    <form className={styles.search} role="search" onSubmit={onSubmit}>
+      <span className={styles.searchIcon} aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      </span>
+      <input
+        type="search"
+        className={styles.searchInput}
+        placeholder="Search"
+        aria-label="Search the documentation"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+    </form>
+  );
+}
 
 /* ------------------------------ Component ------------------------------ */
 
-function QuickstartPanel({ cloud }: { cloud: boolean }): ReactNode {
-  /*
-   * The Cloud version is hosted, so it ships no installation guides and no
-   * quick-start page — the Platform path would link to four pages that do not
-   * exist there, which `onBrokenLinks: 'throw'` correctly fails the build over.
-   * Drop that path on Cloud and start the reader on the first one that remains.
-   */
-  const paths = cloud ? PATHS.filter((p) => p.key !== 'platform') : PATHS;
-  const [active, setActive] = useState<PathKey>(paths[0].key);
+function DocsCard({ card }: { card: Card }): ReactNode {
   const docPath = useDocPath();
-  const current = paths.find((p) => p.key === active) ?? paths[0];
-
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelBody}>
-        <Heading as="h2" className={styles.panelTitle}>
-          Choose a quickstart path.
+    <section className={card.tall ? `${styles.card} ${styles.cardTall}` : styles.card}>
+      <div className={styles.cardHead}>
+        <Heading as="h2" className={styles.cardTitle}>
+          {card.title}
         </Heading>
-        <p className={styles.panelSubtitle}>
-          Select what you&apos;re working on, then start with a quickstart for it.
-        </p>
-
-        <p className={styles.fieldLabel}>What are you setting up?</p>
-        <div className={styles.optionRow} role="tablist" aria-label="What are you setting up?">
-          {paths.map((path) => {
-            const selected = path.key === active;
-            return (
-              <button
-                key={path.key}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                className={selected ? `${styles.option} ${styles.optionActive}` : styles.option}
-                onClick={() => setActive(path.key)}>
-                <span className={styles.optionHead}>
-                  <span className={styles.optionIcon}>{path.icon}</span>
-                  <span className={styles.optionLabel}>{path.label}</span>
-                  {selected && <span className={styles.optionCheck}>{iconCheck}</span>}
-                </span>
-                <span className={styles.optionBlurb}>{path.blurb}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <p className={styles.fieldLabel}>Popular quickstarts</p>
-        <div className={styles.chipRow}>
-          {current.quickstarts.map((q) => (
-            <Link key={q.href} to={docPath(q.href)} className={styles.chip}>
-              {q.label} <span aria-hidden="true">→</span>
+        <span className={`${styles.cardIcon} ${styles[card.accent]}`}>{card.icon}</span>
+      </div>
+      <ul className={styles.cardList}>
+        {card.links.map((link) => (
+          <li key={link.label}>
+            <Link to={link.external ? link.to : docPath(link.to)} className={styles.cardLink}>
+              <span className={styles.arrow} aria-hidden="true">→</span>
+              {link.label}
             </Link>
-          ))}
-        </div>
-        <p className={styles.sidebarHint}>{current.sidebarHint}</p>
-      </div>
-
-      <div className={styles.panelFooter}>
-        <span className={styles.panelFooterIcon}>{iconDownload}</span>
-        <span>{cloud ? 'New to Agent Manager?' : 'Just want Agent Manager running?'}</span>
-        <Link
-          to={docPath(cloud ? 'get-started/what-is-amp' : 'get-started/quick-start')}
-          className={styles.panelFooterLink}>
-          {cloud ? 'Start here →' : 'Quick start →'}
-        </Link>
-      </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
 
-function UseCaseCard({ useCase }: { useCase: UseCase }): ReactNode {
-  const docPath = useDocPath();
-  return (
-    <article className={styles.useCase}>
-      <span className={styles.useCaseIcon}>{useCase.icon}</span>
-      <p className={styles.useCaseEyebrow}>{useCase.eyebrow}</p>
-      <Heading as="h3" className={styles.useCaseTitle}>
-        {useCase.title}
-      </Heading>
-      <p className={styles.useCaseDescription}>{useCase.description}</p>
+export default function DocsLanding(): ReactNode {
+  // useDocsVersion() carries the version identity but no URL path; useLocation()
+  // supplies the path. Each is used for what it actually provides.
+  const { version } = useDocsVersion();
+  const cards = version === 'cloud' ? CLOUD_CARDS : CARDS;
 
-      <p className={styles.chooseWhenLabel}>Choose when</p>
-      <ul className={styles.chooseWhenList}>
-        {useCase.chooseWhen.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-
-      <Link to={docPath(useCase.href)} className={styles.useCaseLink}>
-        View pattern →
-      </Link>
-    </article>
-  );
-}
-
-export default function DocsLanding({ cloud = false }: { cloud?: boolean }): ReactNode {
   return (
     <div className={styles.page}>
-      <header className={styles.hero}>
-        <Heading as="h1" className={styles.heroTitle}>
-          Agent Manager Docs
-        </Heading>
-        <p className={styles.heroSubtitle}>
-          Learn how to run, govern, observe, evaluate and secure AI agents at scale with WSO2
-          Agent Manager.
-        </p>
-      </header>
+      <SearchBar />
 
-      <QuickstartPanel cloud={cloud} />
+      <p className={styles.welcome}>
+        Welcome to WSO2 Agent Manager documentation! Within these pages, you will learn how
+        to run, govern, observe, evaluate and secure AI agents at scale using WSO2 Agent
+        Manager.
+      </p>
 
-      <section className={styles.useCaseSection}>
-        <Heading as="h2" className={styles.useCaseHeading}>
-          Know your use case?
-        </Heading>
-        <div className={styles.useCaseGrid}>
-          {USE_CASES.map((useCase) => (
-            <UseCaseCard key={useCase.title} useCase={useCase} />
-          ))}
-        </div>
-      </section>
+      <div className={styles.grid}>
+        {cards.map((card) => (
+          <DocsCard key={card.title} card={card} />
+        ))}
+      </div>
     </div>
   );
 }
