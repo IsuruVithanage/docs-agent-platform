@@ -68,6 +68,7 @@ const config: Config = {
 
   customFields: {
     latestVersion,
+    searchProvider: 'lunr',
   },
 
   // CookiePro must load before GTM so it can categorize/block tracking
@@ -133,7 +134,13 @@ const config: Config = {
 
   plugins: [
     '@signalwire/docusaurus-plugin-llms-txt',
-    require.resolve('docusaurus-lunr-search'),
+    [
+      require.resolve('docusaurus-lunr-search'),
+      {
+        // Next is unreleased and noindexed; keep it out of search results too.
+        excludeRoutes: ['next', 'next/**'],
+      },
+    ],
     [
       '@docusaurus/plugin-client-redirects',
       {
@@ -227,6 +234,14 @@ const config: Config = {
       apiKey: '5499faf1eb8741fc9f7fcfebe844572e',
       indexName: 'Agent Manager Documentation Site (Docusaurus)',
       contextualSearch: true,
+      // The index was crawled on wso2.github.io/agent-manager/, where docs sat
+      // under /docs/. Map those paths onto this site; baseUrl is prepended
+      // afterwards. A no-op once the index is re-crawled on the new domain.
+      // The validator accepts a RegExp, but the declared type only allows string.
+      replaceSearchResultPathname: {
+        from: /^\/agent-manager\/(docs\/)?/ as unknown as string,
+        to: '/',
+      },
       searchParameters: {},
       askAi: {
         assistantId: 'X4ZuiOLg5WnL',

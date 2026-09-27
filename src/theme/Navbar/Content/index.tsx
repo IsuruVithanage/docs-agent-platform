@@ -129,6 +129,18 @@ function NavbarContentLayout({left, right}) {
 
 function NavbarSearchSection() {
   const {siteConfig} = useDocusaurusContext();
+  if (siteConfig.customFields?.searchProvider === 'lunr') {
+    return (
+      <NavbarSearch className={styles.navbarSearch}>
+        <LunrSearchBar />
+      </NavbarSearch>
+    );
+  }
+  return <AutoSearchBar />;
+}
+
+function AutoSearchBar() {
+  const {siteConfig} = useDocusaurusContext();
   const [provider, setProvider] = useState<SearchProvider>(
     () => getCachedProvider() ?? 'algolia',
   );
