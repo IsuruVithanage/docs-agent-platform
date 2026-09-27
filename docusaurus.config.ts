@@ -68,6 +68,7 @@ const config: Config = {
 
   customFields: {
     latestVersion,
+    searchProvider: 'lunr',
   },
 
   // CookiePro must load before GTM so it can categorize/block tracking
@@ -133,7 +134,13 @@ const config: Config = {
 
   plugins: [
     '@signalwire/docusaurus-plugin-llms-txt',
-    require.resolve('docusaurus-lunr-search'),
+    [
+      require.resolve('docusaurus-lunr-search'),
+      {
+        // Next is unreleased and noindexed; keep it out of search results too.
+        excludeRoutes: ['next', 'next/**'],
+      },
+    ],
     [
       '@docusaurus/plugin-client-redirects',
       {
@@ -227,6 +234,10 @@ const config: Config = {
       apiKey: '5499faf1eb8741fc9f7fcfebe844572e',
       indexName: 'Agent Manager Documentation Site (Docusaurus)',
       contextualSearch: true,
+      replaceSearchResultPathname: {
+        from: /^\/agent-manager\/(docs\/)?/ as unknown as string,
+        to: '/',
+      },
       searchParameters: {},
       askAi: {
         assistantId: 'X4ZuiOLg5WnL',
