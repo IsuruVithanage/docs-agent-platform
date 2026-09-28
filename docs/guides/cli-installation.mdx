@@ -14,9 +14,6 @@ You need a reachable Agent Manager instance before logging in. Follow the [Quick
 
 ## Step 1: Install amctl
 
-:::note Pre-release
-`amctl` is currently shipped as a pre-release. Expect breaking changes between versions until the first stable release.
-:::
 
 ### macOS / Linux
 
@@ -72,12 +69,18 @@ Run `amctl login` with the URL of your Agent Manager API. For a local install th
 amctl login --url http://api.amp.localhost:8080
 ```
 
-`amctl` opens a browser window for sign-in. Enter the default Agent Manager credentials:
+`amctl` opens a browser window for sign-in. Sign in with the same credentials you use for the Agent Manager Console. The username is `admin`, and the password depends on how Agent Manager was installed:
 
-| Field | Value |
-|-------|-------|
-| Username | `admin` |
-| Password | `admin` |
+| Installation | Password |
+|--------------|----------|
+| [Quick Start](../get-started/quick-start.mdx) or [On a VM](./on-a-vm.mdx) | `admin` |
+| [On k3d](./on-k3d.mdx) or [On Your Environment](./on-your-environment.mdx) | Generated at install time. Retrieve it with the command below. |
+
+```bash
+kubectl get secret amp-admin-credentials -n amp-thunder -o jsonpath='{.data.password}' | base64 -d
+```
+
+Replace `amp-thunder` if you installed the identity provider into a different namespace. If someone else operates your Agent Manager instance, ask them for your credentials.
 
 Once authentication completes, the CLI prints a success message and stores the session in `~/.amctl/config.yaml`.
 
