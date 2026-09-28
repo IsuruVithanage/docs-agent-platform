@@ -39,7 +39,6 @@ icon next to the Agent Manager logo. Go to
 | Field | Value |
 |---|---|
 | **Name** | `GitHub` |
-| **Context** | `/github` |
 
 
 Configure the **upstream endpoint** for your development environment:
@@ -80,9 +79,10 @@ environment too.
 
 ## Step 2: Discover What GitHub Offers
 
-The proxy connects upstream and lists the tools the
-server actually advertises, such as `search_issues`, `get_issue`, `create_issue`,
-`update_issue`, `search_repositories`, `list_pull_requests`, and a good many more.
+The proxy connects upstream and lists the tools the server advertises, such as
+`search_issues`, `issue_read`, `issue_write`, `search_repositories`, and
+`list_pull_requests`. The full list is in the
+[GitHub MCP server documentation](https://github.com/github/github-mcp-server#tools).
 
 Read that list carefully before moving on. This is the moment to notice you're
 about to hand an LLM a set of tools that includes some real ways to cause damage
@@ -96,7 +96,7 @@ allow only what the helpdesk agent needs:
 | Allow | Why |
 |---|---|
 | `search_issues` | Find a known issue matching what the employee reported |
-| `get_issue` | Read it for status and any documented workaround |
+| `issue_read` | Read it for status and any documented workaround |
 
 Two tools. Everything else is now unreachable. Not discouraged by a
 prompt. Unreachable, because the proxy does not expose the other tools via the [MCP proxy](../concepts/mcp-proxy.mdx).
@@ -112,7 +112,7 @@ flowchart LR
 
   subgraph C["1 · A tool call"]
     direction LR
-    A2["Agent<br/>holds GITHUB_API_KEY"] -->|"X-API-Key"| G2["MCP Proxy"]
+    A2["Agent<br/>holds GITHUB_MCP_API_KEY"] -->|"X-API-Key"| G2["MCP Proxy"]
     G2 -->|"Authorization: Bearer PAT"| U2["GitHub MCP server"] --> H["GitHub"]
   end
 ```
@@ -129,12 +129,19 @@ out.
 
 ## Step 4: Attach the Proxy to the Agent
 
-Back on the `it-helpdesk` agent page, go to the configure page, then go to tool configuration, and attach the newly registered MCP server to the it-helpdesk agent. Keep all the MCP proxy's configuration at its default settings.
+Back on the `it-helpdesk` agent page, open the configure page and select the
+**Tool Configurations** tab. Click **Add Tool Configuration** and select the
+`GitHub` MCP server.
 
 <Tabs groupId="agent-hosting">
 <TabItem value="platform" label="Platform-Hosted Agent" default>
 
-Then go to the Deploy page and add these two new environment variables. For demo purposes, use one from your own repos.
+Under **Environment Variable Names**, the Console fills in names derived from
+the proxy (`GITHUB_URL` and `GITHUB_API_KEY`). Change them to the names the
+sample reads, `GITHUB_MCP_URL` and `GITHUB_MCP_API_KEY`, then click **Save**.
+
+Next, go to the Deploy page and add these two environment variables. For demo
+purposes, point `ISSUE_TRACKER_REPO` at one of your own repositories.
 
 | Key | Value |
 |---|---|
@@ -145,9 +152,9 @@ Then go to the Deploy page and add these two new environment variables. For demo
 into the system prompt and scopes every issue search to it. The sample refuses to start with
 `USE_MCP=true` and no tracker repo, rather than silently searching everything.
 
-Agent Manager injects the MCP configuration per environment as system-managed values, deriving the names
-from the proxy name you chose in Step 1. The sample loads its MCP tools from that
-pair at startup and merges them with its nine built-in tools.
+Agent Manager injects `GITHUB_MCP_URL` and `GITHUB_MCP_API_KEY` per environment
+as system-managed values. The sample loads its MCP tools from that pair at
+startup and merges them with its nine built-in tools.
 
 Redeploy.
 
@@ -160,21 +167,23 @@ per-environment pattern used for provider bindings in Chapter 2.
 </TabItem>
 <TabItem value="external" label="Externally-Hosted Agent">
 
-Retrieve the per-environment URL and API key from the proxy, then set them
-yourself. Same pair, same names, just not injected:
+Click **Save**. The Console does not show **Environment Variable Names** for an
+externally-hosted agent, because Agent Manager does not inject variables into a
+process it does not run. After you save, the Console opens the **Connect to MCP
+Server** panel with the per-environment URL and API key. Copy the API key now;
+it is shown only once. Then set both yourself:
 
 ```bash
 export USE_MCP=true
-export GITHUB_URL="<proxy endpoint URL for your environment>"
-export GITHUB_API_KEY="<proxy API key>"
+export GITHUB_MCP_URL="<proxy endpoint URL for your environment>"
+export GITHUB_MCP_API_KEY="<proxy API key>"
 export ISSUE_TRACKER_REPO="acme/it-tooling"   # your owner/repo
 
 amp-instrument python main.py
 ```
 
-The variable names must match what the sample reads. Agent Manager derives them
-from the proxy name (`GitHub` → `GITHUB_URL` / `GITHUB_API_KEY`), so if you named
-the proxy something else, use the names the console shows you.
+The variable names must match what the sample reads: `GITHUB_MCP_URL` and
+`GITHUB_MCP_API_KEY`.
 
 The governance is identical: the deny-list, the rewrite rules, and the upstream
 PAT all live on the proxy, so your externally-hosted agent is fenced in exactly
