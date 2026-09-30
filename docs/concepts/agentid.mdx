@@ -14,8 +14,8 @@ can request its own access token and use it to call the gateway.
 AgentID is built on two pieces working together.
 
 1. **A dedicated identity provider for every environment.** Every environment gets its own
-   ThunderID instance, created as part of setting up that environment. This instance is
-   completely separate from every other environment's ThunderID instance, and from the Thunder
+   [ThunderID](https://thunderid.dev/) instance, created as part of setting up that environment. This instance is
+   completely separate from every other environment's [ThunderID](https://thunderid.dev/) instance, and from the Thunder
    identity provider that Agent Manager itself uses for console and API login.
 2. **One OAuth 2.0 identity per agent, per environment.** When an agent is created, Agent Manager
    provisions this identity for every environment already in its organization; promoting the
