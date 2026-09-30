@@ -85,14 +85,32 @@ production:
   on the **Staging** and **Production** tabs the same way you attached it for
   Development in Chapter 2. Full detail:
   [Configure Agent LLM Configuration](../guides/configure-agent-llm-configuration.mdx).
-- **MCP binding**: same idea, under **Tool Configurations**. Attach the
-  `GitHub` MCP server to the **Staging** and **Production** tabs. Full
-  detail: [Configure Agent MCP Proxies](../guides/configure-agent-mcp-proxies.mdx).
+- **MCP binding**: this one works differently. An MCP server covers only the
+  environments that already existed when you created it, and it cannot be
+  extended to environments added later. The `GitHub` MCP server from Chapter 3
+  therefore knows nothing about staging or production. Now that those
+  environments exist, create a new MCP server and switch the agent over to it:
 
-While you're there, each environment can point its binding at a different
-target. Staging might use a cheaper model or a scratch GitHub repo.
-Production points at the real thing. That's expected. Making the binding
-per-environment is what makes it possible.
+  1. Register a new MCP server the same way as in
+     [Chapter 3](./give-the-agent-real-tools.mdx#step-1-register-github-as-an-mcp-proxy),
+     with a new name such as `GitHub All Environments`. Use the same endpoint
+     URL and `Authorization` header, and check **Development**, **Staging**,
+     and **Production** under **Deployment Configuration**. Then fence the tools
+     in again on **Manage Tools**: **Deny all**, allowing only `search_issues`,
+     `list_issues`, and `issue_read`.
+  2. On the `it-helpdesk` agent's configure page, open **Tool Configurations**
+     and remove the `GitHub` configuration from Chapter 3.
+  3. Click **Add Tool Configuration** and select the new MCP server. Rename the
+     variables to `GITHUB_MCP_URL` and `GITHUB_MCP_API_KEY`, as in Chapter 3,
+     and click **Save**.
+
+  Remove the old configuration before adding the new one, because both would
+  inject the same variable names. Full detail:
+  [Configure Agent MCP Proxies](../guides/configure-agent-mcp-proxies.mdx).
+
+The LLM binding can also point each environment at a different target. Because
+each environment has its own tab under **LLM Configurations**, staging might use
+a cheaper model while production points at the real thing.
 
 ## Step 3: Promote to Staging
 
