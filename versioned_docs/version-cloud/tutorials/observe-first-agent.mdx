@@ -7,7 +7,7 @@ title: Monitor Your Agent
 So far you've judged the agent by sending it a few messages and reading the
 replies. That worked for three chapters. But in a production setting this setup would be problematic:
 
-- Does it verify identity *every* time, or only when you're watching?
+- When a tool call fails, do you find out, or does a fluent reply hide it?
 - Does it actually refuse admin password resets, or did you get lucky?
 - When you change the guardrail in Chapter 2, does anything silently regress?
 
@@ -34,30 +34,51 @@ proves nothing.
 Add `--api-key` if you secured the endpoint. Each conversation runs on its own
 session, so multi-turn flows behave like real users.
 
-## Step 2: Check Sequence Adherence
+## Step 2: Check That Its Tools Actually Work
 
-The agent's most important rule is *verify identity before any write action*. In
-trace terms that's an ordering claim: `verify_identity` must appear before
-`reset_password`.
+Since the last chapter, the agent depends on a system it does not control. A
+GitHub search can fail: the token behind the proxy expires, `ISSUE_TRACKER_REPO`
+points at a repository that does not exist, or GitHub rejects the request. The
+agent does not crash when that happens. It gets an error back and carries on,
+and a fluent reply can hide the fact that it never checked the tracker at all.
+
+**Step Success Rate** catches this. It looks at every tool call in a trace and
+scores the share that completed without an error.
 
 1. Open your agent's **Monitors** page, under the **Evaluation** section, and click **Add Monitor**.
 2. Fill in the monitor's basic details (a name and a description), set the data collection to **Past Traces**, then click **Next**.
-3. Add a **Sequence Adherence** evaluator to the monitor, and set its expected sequence to `verify_identity` followed by `reset_password`.
+3. Add a **Step Success Rate** evaluator to the monitor, and set `min_success_rate` to `1.0`, so a single failed tool call fails the trace.
 4. Click **Create Monitor** at the bottom of the page.
 5. Point it at the traces you just generated and run it.
 
 Field-by-field detail is in [Evaluation Monitors](../guides/evaluation-monitors.mdx).
 
-Now read the failures rather than the summary number. The `password-reset-no-verification`
-conversation *should* score badly. It asks for a reset with no verification at
-all. If it passed, either the agent skipped a rule or your monitor isn't checking
-what you think it is. A monitor that scores 100% on its first run usually means
-the second thing.
+Now read the individual results rather than the summary number:
+
+- **A conversation that called no tools is skipped**, not scored, so it does
+  not inflate the result.
+- **Refusals still score 1.0.** When `reset_password` turns down an admin
+  account, the tool returns the refusal as its result; the call itself worked.
+  Step Success Rate tells you the tools ran, not that the agent made the right
+  call. Step 3 covers that.
+- **A score below 1.0 is a real breakage.** Open the trace, find the tool span
+  that failed, and read its error. In this agent that is almost always
+  `search_issues`, `list_issues`, or `issue_read`, and the fix is usually on the proxy or in
+  `ISSUE_TRACKER_REPO`, not in the model.
+
+:::tip Watch it fail once
+A monitor that has never failed has not proven anything. To see this one catch a
+failure, set `ISSUE_TRACKER_REPO` to a repository that does not exist and
+redeploy. Rerun only the known-issue conversation with
+`--only known-issue-match`, then run the monitor again. Put the real value back
+afterwards.
+:::
 
 ## Step 3: Write an Evaluator for Your Own Rules
 
-Sequence Adherence is generic. The rules that actually matter here are
-AcmeCorp's, and no built-in evaluator knows them:
+Step Success Rate is generic: it knows whether a tool ran, not whether the agent
+should have called it. The rules that actually matter here are AcmeCorp's, and
+no built-in evaluator knows them:
 
 - Admin accounts must be refused and escalated, never reset.
 - A policy must be cited before a sensitive action is denied.
@@ -100,14 +121,14 @@ tells you about the traces you remembered to point it at. The monitor from
 Step 2 was created with its data collection set to **Past Traces**, and that
 can't be changed after creation. To score traffic continuously as it arrives,
 create a second monitor the same way as Step 2, with both evaluators
-(**Sequence Adherence** and the custom admin-escalation judge from Step 3),
+(**Step Success Rate** and the custom admin-escalation judge from Step 3),
 and set its data collection to **Future Traces** this time.
 
 {/* SCREENSHOT: Creating a monitor with Future Traces data collection for continuous scoring */}
 
 This is what makes the guardrail work from Chapter 2 safe to change. Tighten
 the prompt decorator, and the monitor tells you right away whether the agent
-still verifies identity. You won't have to discover it next quarter from a
+still refuses admin resets. You won't have to discover it next quarter from a
 support escalation.
 
 ## Step 5: Read Scores in Context
