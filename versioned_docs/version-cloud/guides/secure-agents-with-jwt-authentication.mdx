@@ -35,8 +35,11 @@ an agent uses one or the other, not both.
    disable audience validation.
 3. **Header name** and **Auth header prefix** — the defaults are `Authorization` and `Bearer`.
    Change them only if your callers send the token differently.
-4. **Forward token to upstream** — when on, the validated token header is forwarded to the agent
-   service so it can inspect the token. Turn it off to strip the header before proxying.
+4. **Forward token to upstream** — when on, the gateway forwards the validated token to the agent
+   service in the `x-forwarded-authorization` header and removes the original header. The full
+   header value is forwarded, including the prefix (for example, `Bearer <token>`), so read the
+   token from `x-forwarded-authorization` in your agent. Turn it off to strip the token before
+   proxying.
 
 ## Step 3: Deploy
 
