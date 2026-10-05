@@ -25,6 +25,7 @@
         "concepts/evaluation",
         "concepts/agentid",
         "concepts/gateway",
+        "concepts/guardrails-and-policies",
         "concepts/deployment-pipeline",
         "concepts/agent-sandboxing",
         "concepts/llm-service-provider",
@@ -96,7 +97,9 @@
             },
             "guides/environment-management",
             "guides/instrumentation-catalog",
-            "guides/amp-instrumentation"
+            "guides/amp-instrumentation",
+            "guides/configure-guardrail-system-parameters",
+            "guides/use-a-custom-gateway-image"
           ]
         },
         {
