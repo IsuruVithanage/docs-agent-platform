@@ -4,14 +4,15 @@
   "high": true,
   "skip-dev": true,
   "allowlist": [
-    // image-size: ICNS / JXL / HEIF parsers allow denial of service through
-    // infinite loops. Every published version (<= 2.0.2) is affected and there
-    // is no patched release, so this cannot be resolved by upgrading or by an
-    // override. It reaches us only through @docusaurus/mdx-loader, which uses
-    // it at build time to measure images committed to this repository, so the
-    // malformed-input path is not reachable from user input.
-    // Remove these entries once image-size ships a fix.
-    "GHSA-w3rx-r6r6-pgpr",
-    "GHSA-5p2g-fcmc-qvqq"
+    // braces: recursive AST walkers lack depth guards, so deeply nested brace
+    // patterns can exhaust the call stack. Every published version (<= 3.0.3)
+    // is affected and there is no patched release, so this cannot be resolved
+    // by upgrading or by an override. It reaches us only through
+    // @docusaurus/core (chokidar, micromatch via @docusaurus/utils) and the
+    // webpack toolchain, which expand glob patterns defined in this
+    // repository's config at build/dev time, so attacker-controlled patterns
+    // never reach it.
+    // Remove this entry once braces ships a fix.
+    "GHSA-vfj7-8cjw-p6xm"
   ]
 }
