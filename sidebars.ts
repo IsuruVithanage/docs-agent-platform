@@ -64,6 +64,7 @@ const sidebars: SidebarsConfig = {
             'guides/cli-installation',
           ],
         },
+        'guides/deploy-an-a2a-agent',
         {
           type: 'category',
           label: 'Evaluation & Observability',
@@ -146,6 +147,7 @@ const sidebars: SidebarsConfig = {
           id: 'tutorials/build-a-ballerina-agent',
           label: 'Deploy the Ballerina Leave Assistant Sample',
         },
+        'tutorials/deploy-the-a2a-notes-agent-sample',
       ],
     },
     {

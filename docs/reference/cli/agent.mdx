@@ -81,6 +81,17 @@ amctl agent create checkout-api \
   --port 8080 \
   --openapi-spec openapi.yaml
 
+# A2A agent: needs only the port its A2A server listens on, no OpenAPI spec
+amctl agent create notes-agent \
+  --display-name "Notes Agent" \
+  --subtype a2a-agent \
+  --port 9099 \
+  --repo-url https://github.com/acme/notes-agent \
+  --build-type buildpack \
+  --language python \
+  --language-version 3.11 \
+  --run-command "python main.py"
+
 # Plain environment + secret references
 amctl agent create payments \
   --display-name "Payments" \
@@ -109,7 +120,7 @@ amctl agent create chatbot \
 |------|------|---------|-------------|
 | `--display-name` | string | _required_ | Human-readable name. |
 | `--description` | string | (none) | Free-text description. |
-| `--subtype` | string | (none) | Agent sub-type: `chat-api` or `custom-api`. |
+| `--subtype` | string | (none) | Agent sub-type: `chat-api`, `custom-api`, or `a2a-agent`. The A2A choice is fixed at creation: an agent cannot later change between `a2a-agent` and the other two. |
 | `--provisioning` | string | `internal` | `internal` (platform-managed) or `external`. |
 | `--repo-url` | string | (none) | Source repository URL. |
 | `--repo-branch` | string | (none) | Source branch. |
@@ -120,9 +131,9 @@ amctl agent create chatbot \
 | `--language-version` | string | (none) | Language version for buildpack builds. |
 | `--run-command` | string | (none) | Run command for buildpack builds. |
 | `--dockerfile` | string | (none) | Dockerfile path (Docker builds). |
-| `--port` | int | `8000` | Service port (1–65535). Applies only to `custom-api`. |
+| `--port` | int | `8000` | Service port (1 to 65535). Applies only to `custom-api` and `a2a-agent`; `chat-api` uses a fixed port. |
 | `--base-path` | string | (none) | Base path for the agent's HTTP service. |
-| `--openapi-spec` | string | (none) | Path to OpenAPI schema within the repo. |
+| `--openapi-spec` | string | (none) | Path to OpenAPI schema within the repo. Rejected for `a2a-agent`. |
 | `--no-auto-instrumentation` | bool | `false` | Disable automatic instrumentation. |
 | `--env` | strings | (none) | Environment variable as `KEY=VALUE`. Repeatable. Stored as plain text. |
 | `--env-secret` | strings | (none) | Sensitive env variable as `KEY=VALUE`. Repeatable. |
