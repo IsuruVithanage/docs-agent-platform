@@ -88,7 +88,7 @@ What it does:
 3. Applies the upstream **kata-deploy** DaemonSet, with a nodeSelector and toleration injected **before** apply — so it only ever lands on the labeled node(s); your other nodes are never reconfigured.
 4. **Auto-wires k3s nodes**: k3s bundles its own containerd (configured only via `config.toml.tmpl`, read at startup), which upstream kata-deploy does not handle — the installer detects k3s nodes and patches the template + restarts the k3s agent for you.
 5. Applies the `kata-qemu` RuntimeClass and taints the node(s) `kata=true:NoSchedule`.
-6. Patches the Fluent Bit log DaemonSet to tolerate the taint, so agent logs are collected.
+6. Lets the Fluent Bit log DaemonSet tolerate the taint, so agent logs are collected. It sets the chart value `fluent-bit.tolerations` on your `observability-logs-opensearch` Helm release (a `helm upgrade --reuse-values` at the release's installed chart version), and falls back to patching the DaemonSet only when that release cannot be upgraded with Helm. A patch is lost whenever the DaemonSet is recreated, so the installer prints the `helm upgrade` command to make it durable.
 
 :::tip Verify
 ```bash
@@ -96,6 +96,10 @@ kubectl get runtimeclass kata-qemu
 kubectl -n kube-system rollout status daemonset/kata-deploy
 kubectl get node <node-name> --show-labels   # kata=true
 ```
+:::
+
+:::warning Keep the Fluent Bit toleration on later upgrades
+The toleration is stored in the `observability-logs-opensearch` release's values, so it must be present on every upgrade that re-renders the Fluent Bit DaemonSet. An upgrade with `--reset-values`, or one that passes new `--set`/`-f` values without `--reuse-values`, drops it unless you pass `--set "fluent-bit.tolerations[0].operator=Exists"` again. Agents on the Kata node then stop producing logs with no error.
 :::
 
 <details>
