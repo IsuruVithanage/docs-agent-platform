@@ -119,14 +119,15 @@ kubectl taint node <node-name> gvisor=true:NoSchedule --overwrite
 
 The label is what the RuntimeClass schedules onto; the taint keeps regular runc pods off the node.
 
-The taint also keeps the Fluent Bit log collector off the node, and without it agents there produce no runtime logs. Fluent Bit is a DaemonSet rendered by the `observability-logs-opensearch` Helm chart, so its toleration is a chart value. Check whether your install already sets it:
+The taint also keeps the Fluent Bit log collector off the node, and without it agents there produce no runtime logs. Fluent Bit is a DaemonSet rendered by the `observability-logs-opensearch` Helm chart, so its toleration is a chart value. Check whether the release stores it:
 
 ```bash
-kubectl get daemonset fluent-bit -n openchoreo-observability-plane \
-  -o jsonpath='{.spec.template.spec.tolerations}'
+helm get values observability-logs-opensearch -n openchoreo-observability-plane
 ```
 
-If the output does not include `{"operator":"Exists"}`, set the value on the release:
+Check the release values rather than the live DaemonSet: a toleration patched onto the DaemonSet (as earlier versions of the setup scripts did) shows up on the live object, but is lost when the DaemonSet is recreated.
+
+If `fluent-bit.tolerations` does not list `- operator: Exists` with no `key` or `effect`, set the value on the release:
 
 ```bash
 helm upgrade observability-logs-opensearch \
