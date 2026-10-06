@@ -12,7 +12,7 @@ Deploy a platform-hosted agent that speaks the [Agent2Agent (A2A) protocol](http
 
 ## How the Gateway Exposes an A2A Agent
 
-An A2A agent is not called like a chat agent. It has no `/chat` endpoint and no OpenAPI document. A client fetches the agent's card, picks a transport, and sends messages; the agent answers with a task.
+A client fetches the agent's card, picks a transport, and sends messages; the agent answers with a task.
 
 Your agent serves its own card and its own A2A routes. Agent Manager publishes it to the gateway with two transports at fixed path prefixes under the agent's URL:
 
