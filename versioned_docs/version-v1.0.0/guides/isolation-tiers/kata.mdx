@@ -93,12 +93,29 @@ What it does:
 5. Applies the `kata-qemu` RuntimeClass and taints the node(s) `kata=true:NoSchedule`.
 6. Patches the Fluent Bit log DaemonSet to tolerate the taint, so agent logs are collected.
 
+:::note Make the Fluent Bit toleration durable
+The v1.0.0 installer adds the toleration by patching the DaemonSet, and a patch is lost whenever the DaemonSet is recreated (a reinstall of the logs module or a namespace teardown). Fluent Bit is rendered by the `observability-logs-opensearch` Helm chart, so set the toleration as a chart value as well, passing the chart version that is already installed (the `CHART` column of `helm list -n openchoreo-observability-plane`):
+
+```bash
+helm upgrade observability-logs-opensearch \
+  oci://ghcr.io/openchoreo/helm-charts/observability-logs-opensearch \
+  --namespace openchoreo-observability-plane \
+  --version 0.5.3 \
+  --reuse-values \
+  --set "fluent-bit.tolerations[0].operator=Exists"
+```
+:::
+
 :::tip Verify
 ```bash
 kubectl get runtimeclass kata-qemu
 kubectl -n kube-system rollout status daemonset/kata-deploy
 kubectl get node <node-name> --show-labels   # kata=true
 ```
+:::
+
+:::warning Keep the Fluent Bit toleration on later upgrades
+The toleration is stored in the `observability-logs-opensearch` release's values, so it must be present on every upgrade that re-renders the Fluent Bit DaemonSet. An upgrade with `--reset-values`, or one that passes new `--set`/`-f` values without `--reuse-values`, drops it unless you pass `--set "fluent-bit.tolerations[0].operator=Exists"` again. Agents on the Kata node then stop producing logs with no error.
 :::
 
 <details>
