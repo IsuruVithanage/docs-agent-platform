@@ -12,13 +12,6 @@
     // malformed-input path is not reachable from user input.
     // Remove these entries once image-size ships a fix.
     "GHSA-w3rx-r6r6-pgpr",
-    "GHSA-5p2g-fcmc-qvqq",
-    // braces: deeply nested brace patterns exhaust the stack. Every published
-    // version (<= 3.0.3) is affected and there is no patched release. It
-    // reaches us only through micromatch/chokidar inside Docusaurus, which
-    // expand glob patterns from this repository's own config and file tree at
-    // build time, so the malformed-input path is not reachable from user input.
-    // Remove this entry once braces ships a fix.
-    "GHSA-vfj7-8cjw-p6xm"
+    "GHSA-5p2g-fcmc-qvqq"
   ]
 }
