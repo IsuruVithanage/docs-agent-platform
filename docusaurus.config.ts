@@ -68,7 +68,7 @@ const config: Config = {
 
   customFields: {
     latestVersion,
-    searchProvider: 'lunr',
+    searchProvider: 'auto',
   },
 
   // CookiePro must load before GTM so it can categorize/block tracking
@@ -231,13 +231,9 @@ const config: Config = {
 
     algolia: {
       appId: 'HGUIB02S86',
-      apiKey: '5499faf1eb8741fc9f7fcfebe844572e',
-      indexName: 'Agent Manager Documentation Site (Docusaurus)',
+      apiKey: '08ce042847a47babb4833e131c226e33',
+      indexName: 'Docs-agent-platform Crawler',
       contextualSearch: true,
-      replaceSearchResultPathname: {
-        from: /^\/agent-manager\/(docs\/)?/ as unknown as string,
-        to: '/',
-      },
       searchParameters: {},
       askAi: {
         assistantId: 'X4ZuiOLg5WnL',
